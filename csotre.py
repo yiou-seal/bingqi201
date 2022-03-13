@@ -62,6 +62,7 @@ def wholecrosscorrwithplot(d1,d2,name1,name2):
     ax.plot(rs)
     ax.axvline(np.ceil(len(rs) / 2), color='k', linestyle='--', label='Center')
     ax.axvline(np.argmax(rs), color='r', linestyle='--', label='Peak synchrony')
+    print(np.argmax(rs))
     ax.set(title=f'Offset = {offset} frames\n{name1} leads <> {name2} leads', ylim=[.1, .31], xlim=[0, seconds * fps*2], xlabel='Offset',
            ylabel='Pearson r')
     ax.set_xticklabels([int(item - 150) for item in ax.get_xticks()])
@@ -82,6 +83,20 @@ if  __name__ == '__main__':
     showwholeplot(dfwithouthuandang)
 
     wholecrosscorrwithplot(dfwithouthuandang['输出转速'],dfwithouthuandang['油底壳温度'],'输出转速','油底壳温度')
+
+
+
+    wholedf = pd.read_excel("./稳定档位台架数据/20211014_095041.xlsx")
+
+    wholedf.drop_duplicates('时间', 'first', inplace=True)  # 去重
+
+    # dfwithouthuandang = wholedf.copy(deep=True)
+    #
+    # dfwithouthuandang = dfwithouthuandang[dfwithouthuandang['目标挡位'] == dfwithouthuandang['实际挡位']]
+
+    # showwholeplot(wholedf)
+
+    wholecrosscorrwithplot(wholedf['转速'], wholedf['温度'], '转速', '温度')
 
 
 
