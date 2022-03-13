@@ -351,8 +351,12 @@ if  __name__ == '__main__':
     huandnag34df=wholedf[(wholedf['目标挡位']==6) & (wholedf['实际挡位']==5)]
     res=analysishuandang(huandnag34df)
 
+    res_mask = res[(res['res0'] == 1.0)]
+    print(res_mask)
     wholedfres=wholedf.copy(deep=True)
-    wholedfres['res']=0
+    wholedfres.insert(wholedfres.shape[1], 'res', 0)
+    wholedfres['res'][res_mask.index] = 1
+
 
 
     # wholedfres=pd.concat([wholedfres,res],axis=1)# 老报错
