@@ -11,6 +11,8 @@ from adtk.detector import SeasonalAD, AutoregressionAD, MinClusterDetector, PcaA
     LevelShiftAD
 from adtk.visualization import plot
 
+working_directory = os.path.abspath('.')
+
 # 定义一个函数，函数名字为get_all_excel，需要传入一个目录
 def get_all_excel(dir):
     file_list = []
@@ -29,7 +31,8 @@ def get_all_excel(dir):
                 file_list.append(file_name)
     return file_list
 
-#用于分析换挡部分
+
+# 用于分析换挡部分
 def analysishuandang(huandnag34df):
     unuselist = \
         ["时间",
@@ -101,6 +104,7 @@ def analysishuandang(huandnag34df):
     res = pd.concat([id["index"], res], axis=1)
     res = res.set_index("index")
     return res
+
 
 # 平稳时应该主要检测段之间方差的变化，在一段内部，检测值突变点
 def analysispinwen(pingwendf):
@@ -178,6 +182,7 @@ def analysispinwen(pingwendf):
     res = pd.concat([id["index"], res], axis=1)
     res = res.set_index("index")
     return res
+
 
 def analysispinwen2222(pingwendf,showplot=False):
     unuselist = \
@@ -278,6 +283,7 @@ def analysispinwen2222(pingwendf,showplot=False):
     res = res.set_index("index")
     return res
 
+
 def analysispinwenNEW(pingwendf):
     unuselist = \
         ["时间",
@@ -325,6 +331,23 @@ def analysispinwenNEW(pingwendf):
 
     return finalres
 
+
+'''
+    功能:
+        将data数据存入file_path路径下的（可能新建）Excel文件中去
+    函数输入:
+        data: dataframe类型，存入excel的数据
+        file_path: 存入的Excel路径
+    函数输出:
+        1: 成功存入
+        0: 存入失败
+'''
+
+
+def write_to_excel(data, file_path):
+    data.to_excel(file_path, index=False)
+
+
 if  __name__ == '__main__':
     plt.rcParams['font.sans-serif'] = ['Arial Unicode MS']  # 处理中文乱码
     # 获取目录中的指定文件
@@ -357,7 +380,8 @@ if  __name__ == '__main__':
     wholedfres.insert(wholedfres.shape[1], 'res', 0)
     wholedfres['res'][res_mask.index] = 1
 
-
+    excel_output_file_path = working_directory + '/生成结果/测试1.xlsx'
+    write_to_excel(wholedfres, excel_output_file_path)
 
     # wholedfres=pd.concat([wholedfres,res],axis=1)# 老报错
     # wholedfres=wholedfres.fillna(0)
