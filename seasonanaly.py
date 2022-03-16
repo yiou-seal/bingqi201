@@ -33,7 +33,7 @@ def get_all_excel(dir):
 
 
 # 用于分析换挡部分
-def analysishuandang(huandnag34df):
+def analysishuandang(huandnag34df,show合并各种分析方法的图=False):
     unuselist = \
         ["时间",
          "油底壳温度",
@@ -50,6 +50,7 @@ def analysishuandang(huandnag34df):
     # ax = plt.axes(np.array(huandnag34df["时间"]).tolist())
 
     res = pd.DataFrame({'res0': [0] * len(huandnag34dfuse)})
+    # res['res0'] = res['res0'].astype(int)
 
     # 检测季节模式的异常变化。在内部，它被实现为带有transformer ClassicSeasonal分解的管道网。（对于现有的数据不推荐使用）
     # seasonal_ad = SeasonalAD(c=4.0, side="both")
@@ -63,46 +64,77 @@ def analysishuandang(huandnag34df):
     # plt.show()
 
     min_cluster_detector = MinClusterDetector(KMeans(n_clusters=7))
-    anomalies = min_cluster_detector.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+    anomalies1 = min_cluster_detector.fit_detect(huandnag34dfuse)
+    plot(huandnag34dfuse, anomaly=anomalies1, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
          curve_group='all')
     plt.show()
+    # anomalies1_mask = (anomalies1 == True)
+    # anomalies1_mask = anomalies1_mask.reset_index()
+    # anomalies1_mask = anomalies1_mask.drop(["新时间"], axis=1)
+    anomalies1[anomalies1 == 'False'] = 0
+    anomalies1[anomalies1 == 'True'] = 1
+    anomalies1 = anomalies1.astype(int)
+    anomalies1 = anomalies1.reset_index()
+    anomalies1 = anomalies1.drop(["新时间"], axis=1)
+
+    # res['res0'] = res['res0'] + anomalies1
+
 
     # 效果好
     pca_ad = PcaAD(k=2, c=8)
-    anomalies = pca_ad.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+    anomalies2 = pca_ad.fit_detect(huandnag34dfuse)
+    plot(huandnag34dfuse, anomaly=anomalies2, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
          curve_group='all')
     plt.show()
-    anomalies[anomalies == 'False'] = '0'
-    anomalies[anomalies == 'True'] = '1'
-    anomalies = anomalies.astype(int)
-    anomalies = anomalies.reset_index()
-    anomalies = anomalies.drop(["新时间"], axis=1)
-
-    res['res0'] = res['res0'] + anomalies
+    anomalies2[anomalies2 == 'False'] = '0'
+    anomalies2[anomalies2 == 'True'] = '1'
+    anomalies2 = anomalies2.astype(int)
+    anomalies2 = anomalies2.reset_index()
+    anomalies2 = anomalies2.drop(["新时间"], axis=1)
 
     # volatility_shift_ad = VolatilityShiftAD(c=3.0, side='positive', window=30)
-    # anomalies = volatility_shift_ad.fit_detect(huandnag34dfuse)
-    # plot(huandnag34dfuse, anomaly=anomalies, anomaly_color='red')
+    # anomalies3 = volatility_shift_ad.fit_detect(huandnag34dfuse)
+    # plot(huandnag34dfuse, anomaly=anomalies3, anomaly_color='red')
     # plt.show()
 
     regression_ad = RegressionAD(regressor=LinearRegression(), target="输入转速", c=3.0)
-    anomalies = regression_ad.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+    anomalies3 = regression_ad.fit_detect(huandnag34dfuse)
+    plot(huandnag34dfuse, anomaly=anomalies3, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
          curve_group='all')
     plt.show()
-    anomalies[anomalies == 'False'] = '0'
-    anomalies[anomalies == 'True'] = '1'
-    anomalies = anomalies.astype(int)
-    anomalies = anomalies.reset_index()
-    anomalies = anomalies.drop(["新时间"], axis=1)
+    anomalies3[anomalies3 == 'False'] = '0'
+    anomalies3[anomalies3 == 'True'] = '1'
+    anomalies3 = anomalies3.astype(int)
+    anomalies3 = anomalies3.reset_index()
+    anomalies3 = anomalies3.drop(["新时间"], axis=1)
 
-    res['res0'] = res['res0'] + anomalies
+    res['res0'] = res['res0'] + anomalies1 + anomalies2 + anomalies3
+
 
     id = huandnag34df.reset_index()
     res = pd.concat([id["index"], res], axis=1)
     res = res.set_index("index")
+    res.loc[res['res0']>=1,'res0']=1
+
+    if show合并各种分析方法的图:
+        # id['时间']=pd.to_datetime(id["时间"])
+        new故障点的标注=res.copy(deep=True)
+        new故障点的标注.reset_index(drop=True,inplace=True)
+        new故障点的标注["新时间"] = pd.date_range(start='2019-1-09', periods=len(huandnag34dfuse), freq='S')
+        new故障点的标注=new故障点的标注.set_index("新时间")
+        # new故障点的标注['resbool']='True'
+        # new故障点的标注.loc[new故障点的标注['res0'] >= 1, 'resbool'] = 'True'
+        # new故障点的标注.loc[new故障点的标注['res0'] < 1, 'resbool'] = 'False'
+        # new故障点的标注=new故障点的标注.drop(['res0'], axis=1)
+        # new故障点的标注=new故障点的标注['resbool'].astype(bool)
+        # huandnag34dfuse.reset_index(drop=True,inplace=True)
+        # huandnag34dfuse = pd.concat([id["index"], huandnag34dfuse], axis=1)
+        # huandnag34dfuse.set_index("index")
+        plot(huandnag34dfuse, anomaly=new故障点的标注, ts_linewidth=1, ts_markersize=3, anomaly_color='red',
+             anomaly_alpha=0.3,
+             curve_group='all')
+        plt.show()
+
     return res
 
 
@@ -391,6 +423,8 @@ if  __name__ == '__main__':
 
     pingwen3df = wholedf[(wholedf['目标挡位'] == 3) & (wholedf['实际挡位'] == 3)]
     res = analysispinwenNEW(pingwen3df)
+
+
 
 
 
