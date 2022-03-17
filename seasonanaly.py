@@ -33,7 +33,7 @@ def get_all_excel(dir):
 
 
 # 用于分析换挡部分
-def analysishuandang(huandnag34df,show合并各种分析方法的图=False):
+def analysishuandang(huandnag34df,show合并各种分析方法的图=False,showplot=False):
     unuselist = \
         ["时间",
          "油底壳温度",
@@ -65,9 +65,10 @@ def analysishuandang(huandnag34df,show合并各种分析方法的图=False):
 
     min_cluster_detector = MinClusterDetector(KMeans(n_clusters=7))
     anomalies1 = min_cluster_detector.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies1, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
-         curve_group='all')
-    plt.show()
+    if showplot:
+        plot(huandnag34dfuse, anomaly=anomalies1, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+             curve_group='all')
+        plt.show()
     # anomalies1_mask = (anomalies1 == True)
     # anomalies1_mask = anomalies1_mask.reset_index()
     # anomalies1_mask = anomalies1_mask.drop(["新时间"], axis=1)
@@ -83,9 +84,10 @@ def analysishuandang(huandnag34df,show合并各种分析方法的图=False):
     # 效果好
     pca_ad = PcaAD(k=2, c=8)
     anomalies2 = pca_ad.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies2, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
-         curve_group='all')
-    plt.show()
+    if showplot:
+        plot(huandnag34dfuse, anomaly=anomalies2, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+             curve_group='all')
+        plt.show()
     anomalies2[anomalies2 == 'False'] = '0'
     anomalies2[anomalies2 == 'True'] = '1'
     anomalies2 = anomalies2.astype(int)
@@ -99,9 +101,10 @@ def analysishuandang(huandnag34df,show合并各种分析方法的图=False):
 
     regression_ad = RegressionAD(regressor=LinearRegression(), target="输入转速", c=3.0)
     anomalies3 = regression_ad.fit_detect(huandnag34dfuse)
-    plot(huandnag34dfuse, anomaly=anomalies3, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
-         curve_group='all')
-    plt.show()
+    if showplot:
+        plot(huandnag34dfuse, anomaly=anomalies3, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+             curve_group='all')
+        plt.show()
     anomalies3[anomalies3 == 'False'] = '0'
     anomalies3[anomalies3 == 'True'] = '1'
     anomalies3 = anomalies3.astype(int)
@@ -245,13 +248,13 @@ def analysispinwen2222(pingwendf,showplot=False):
     # plot(pingwendfuse, anomaly=anomalies, ts_markersize=1, anomaly_color='red', anomaly_tag="marker", anomaly_markersize=2)
     # plt.show()
 
-    min_cluster_detector = MinClusterDetector(KMeans(n_clusters=2))
-    anomalies = min_cluster_detector.fit_detect(pingwendfuse)
-
-    if showplot:
-        plot(pingwendfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
-             curve_group='all')
-        plt.show()
+    # min_cluster_detector = MinClusterDetector(KMeans(n_clusters=2))
+    # anomalies = min_cluster_detector.fit_detect(pingwendfuse)
+    #
+    # if showplot:
+    #     plot(pingwendfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+    #          curve_group='all')
+    #     plt.show()
 
 
         # pca_ad = PcaAD(k=2, c=8)
@@ -267,42 +270,50 @@ def analysispinwen2222(pingwendf,showplot=False):
         # res['res0'] = res['res0'] + anomalies
 
     level_shift_ad = LevelShiftAD(c=4.0, side='both', window=10)
-    anomalies = level_shift_ad.fit_detect(pingwendfuse)
-    plot(pingwendfuse, anomaly=anomalies, anomaly_color='red')
-    plt.show()
-    if showplot:
-        plot(pingwendfuse, anomaly=anomalies, anomaly_color='red')
-        plt.show()
-    anomalies['axis_1'] = anomalies.loc[:, anomalies.columns.tolist()].apply(lambda x: x.sum(), axis=1)
-    anomalies.loc[anomalies['axis_1']>=1,'axis_1']=1
-    anomalies.reset_index(inplace=True)
-    res['res0'] = res['res0'] + anomalies['axis_1']
+    try:
+        anomalies = level_shift_ad.fit_detect(pingwendfuse)
+    except Exception:
+        print('某段数据过少，跳过')
+    else:
+        if showplot:
+            plot(pingwendfuse, anomaly=anomalies, anomaly_color='red')
+            plt.show()
+        anomalies['axis_1'] = anomalies.loc[:, anomalies.columns.tolist()].apply(lambda x: x.sum(), axis=1)
+        anomalies.loc[anomalies['axis_1']>=1,'axis_1']=1
+        anomalies.reset_index(inplace=True)
+        res['res0'] = res['res0'] + anomalies['axis_1']
 
     # 不知道为什么检测不出来
     volatility_shift_ad = VolatilityShiftAD(c=6.0, side="both", window=10)
-    anomalies = volatility_shift_ad.fit_detect(pingwendfuse)
-
-    if showplot:
-        plot(pingwendfuse, anomaly=anomalies, anomaly_color='red')
-        plt.show()
-    anomalies['axis_1'] = anomalies.loc[:, anomalies.columns.tolist()].apply(lambda x: x.sum(), axis=1)
-    anomalies.loc[anomalies['axis_1'] >= 1, 'axis_1'] = 1
-    anomalies.reset_index(inplace=True)
-    res['res0'] = res['res0'] + anomalies['axis_1']
+    try:
+        anomalies = volatility_shift_ad.fit_detect(pingwendfuse)
+    except Exception:
+        print('某段数据过少，跳过')
+    else:
+        if showplot:
+            plot(pingwendfuse, anomaly=anomalies, anomaly_color='red')
+            plt.show()
+        anomalies['axis_1'] = anomalies.loc[:, anomalies.columns.tolist()].apply(lambda x: x.sum(), axis=1)
+        anomalies.loc[anomalies['axis_1'] >= 1, 'axis_1'] = 1
+        anomalies.reset_index(inplace=True)
+        res['res0'] = res['res0'] + anomalies['axis_1']
 
     regression_ad = RegressionAD(regressor=LinearRegression(), target="输入转速", c=3.0)
-    anomalies = regression_ad.fit_detect(pingwendfuse)
-
-    if showplot:
-        plot(pingwendfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
-             curve_group='all')
-        plt.show()
-    anomalies[anomalies == 'False'] = '0'
-    anomalies[anomalies == 'True'] = '1'
-    anomalies = anomalies.astype(int)
-    anomalies = anomalies.reset_index()
-    anomalies = anomalies.drop(["新时间"], axis=1)
-    res['res0'] = res['res0'] + anomalies
+    try:
+        anomalies = regression_ad.fit_detect(pingwendfuse)
+    except Exception:
+        print('某段数据过少，跳过')
+    else:
+        if showplot:
+            plot(pingwendfuse, anomaly=anomalies, ts_linewidth=1, ts_markersize=3, anomaly_color='red', anomaly_alpha=0.3,
+                 curve_group='all')
+            plt.show()
+        anomalies[anomalies == 'False'] = '0'
+        anomalies[anomalies == 'True'] = '1'
+        anomalies = anomalies.astype(int)
+        anomalies = anomalies.reset_index()
+        anomalies = anomalies.drop(["新时间"], axis=1)
+        res['res0'] = res['res0'] + anomalies
 
     # 检测一下整体标准差,大于10认为不正常
     stddf=pingwendfuse.std().max()
@@ -313,6 +324,7 @@ def analysispinwen2222(pingwendf,showplot=False):
     id = pingwendf.reset_index()
     res = pd.concat([id["index"], res], axis=1)
     res = res.set_index("index")
+    res.loc[res['res0'] >= 1, 'res0'] = 1
     return res
 
 
@@ -361,6 +373,8 @@ def analysispinwenNEW(pingwendf):
     else:
         finalres = pd.concat([finalres, subres], axis=0)
 
+
+
     return finalres
 
 
@@ -386,34 +400,62 @@ if  __name__ == '__main__':
     filelist=get_all_excel('./AT台架实验数据/换挡数据')
     print(filelist)
 
+    count=0
     wholedf = pd.read_csv(filelist[0])
-    wholedf.drop_duplicates('时间', 'first', inplace=True)     # 去重
+    wholedf.reset_index(drop=True, inplace=True)
+    wholedf['index']=range(count,wholedf.shape[0])
+    wholedf.set_index('index', drop=True, inplace=True)
+    count += wholedf.shape[0]
+    wholedfraw=wholedf.copy(deep=True)
+    wholedf.drop_duplicates('时间', 'first', inplace=True)  # 去重
     del (filelist[0])
     for fn in filelist:
         print(fn)
         thisdf = pd.read_csv(fn)
+
+        thisdf['index'] = range(count, count+thisdf.shape[0])
+        thisdf.reset_index(drop=True, inplace=True)
+        thisdf.set_index('index',drop=True,inplace=True)
+        count += thisdf.shape[0]
+
+        thisdfraw=thisdf.copy(deep=True)
+        wholedfraw=pd.concat([wholedfraw,thisdfraw],axis=0)
+
         thisdf.drop_duplicates('时间', 'first', inplace=True)     # 去重
         wholedf=pd.concat([wholedf,thisdf],axis=0)
+
+    # wholedfraw.reset_index(drop=True, inplace=True)
+    # wholedf=wholedfraw.drop_duplicates('时间', 'first', inplace=False)  # 去重
+    wholedf.reset_index(inplace=True)
+    wholedfhasindex=wholedf.copy(deep=True)
+    wholedf.drop(['index'], axis=1,inplace=True)
     print(wholedf.isnull().sum())
-    wholedf.reset_index(drop=True,inplace=True)
+    # wholedf.reset_index(drop=True,inplace=True)
 
     rawtimeser=wholedf['时间']
     newtimedf=wholedf.drop(['时间'],axis=1)
     newtimedf['时间'] = range(1, len(newtimedf) + 1)
     showwholeplot(newtimedf)
 
-
-    huandnag34df=wholedf[(wholedf['目标挡位']==6) & (wholedf['实际挡位']==5)]
-    res=analysishuandang(huandnag34df)
-
-    res_mask = res[(res['res0'] == 1.0)]
-    print(res_mask)
     wholedfres=wholedf.copy(deep=True)
     wholedfres.insert(wholedfres.shape[1], 'res', 0)
-    wholedfres['res'][res_mask.index] = 1
+    listdangwei=[[0,1],[0,2],[0,8],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[2,2],[7,7]]
+    for dangweipair in listdangwei:
 
-    excel_output_file_path = working_directory + '/生成结果/测试1.xlsx'
-    write_to_excel(wholedfres, excel_output_file_path)
+        huandnag34df=wholedf[(wholedf['目标挡位']==dangweipair[1]) & (wholedf['实际挡位']==dangweipair[0])]
+        reshuandang=analysishuandang(huandnag34df)
+
+        res_mask = reshuandang[(reshuandang['res0'] == 1.0)]
+        wholedfres['res'][res_mask.index] = 1
+
+        huandnag34df = wholedf[(wholedf['目标挡位'] == dangweipair[0]) & (wholedf['实际挡位'] == dangweipair[1])]
+        reshuandang = analysishuandang(huandnag34df)
+
+        res_mask = reshuandang[(reshuandang['res0'] == 1.0)]
+        print(res_mask)
+
+
+        wholedfres['res'][res_mask.index] = 1
 
     # wholedfres=pd.concat([wholedfres,res],axis=1)# 老报错
     # wholedfres=wholedfres.fillna(0)
@@ -421,8 +463,32 @@ if  __name__ == '__main__':
     # wholedfres = wholedfres.drop(["res0"], axis=1)
     print()
 
-    pingwen3df = wholedf[(wholedf['目标挡位'] == 3) & (wholedf['实际挡位'] == 3)]
-    res = analysispinwenNEW(pingwen3df)
+    for i in range(1,9):
+        if i==2 or i==7:
+            continue
+        pingwen3df = wholedf[(wholedf['目标挡位'] == i) & (wholedf['实际挡位'] == i)]
+        respinwen = analysispinwenNEW(pingwen3df)
+        res_mask = respinwen[(respinwen['res0'] == 1.0)]
+        print(res_mask)
+        wholedfres['res'][res_mask.index] = 1
+
+    # wholedfres['res']=wholedfres['res']*10
+
+
+    excel_output_file_path = working_directory + '/生成结果/测试final.xlsx'
+    write_to_excel(wholedfres, excel_output_file_path)# 这个是降采样之后的结果
+
+    wholedfres.reset_index(drop=True,inplace=True)
+    wholedfres['index']=wholedfhasindex['index']
+    wholedfres.set_index('index',drop=True,inplace=True)
+    #回填到降采样之前的数据里
+    wholedfrawres = wholedfraw.copy(deep=True)
+    wholedfrawres.insert(wholedfrawres.shape[1], 'res', 0)
+    res_mask = wholedfres[(wholedfres['res'] !=0)]
+    print(res_mask)
+    wholedfrawres['res'][res_mask.index] = 1
+    excel_output_file_path = working_directory + '/生成结果/测试final完整.xlsx'
+    write_to_excel(wholedfrawres, excel_output_file_path)  # 这个是降采样之后的结果
 
 
 
